@@ -1,0 +1,96 @@
+import numpy
+import pandas
+import scipy
+import matplotlib.pyplot as plt
+import matplotlib.dates as pltdates
+from PIL import Image as img
+from datetime import datetime
+
+"""
+This code takes government data of the levels of the Kinneret and the Dead Sea and plots their changes from 1966 until today.
+Sources:
+Kinneret - https://data.gov.il/dataset/https-www-data-gov-il-dataset-682
+Dead Sea - https://data.gov.il/dataset/https-www-data-gov-il-dataset-683
+"""
+
+# After saving the data in csv format I use both Pandas and Numpy to organize the data:
+
+kinneret_pandas = pandas.read_csv("kinneret_data.csv")
+kinneret_data = open("kinneret_data.csv")
+kinneret_text = kinneret_data.readlines()
+kinneret_list = []
+for i in range(len(kinneret_text)):
+    kinneret_list.append([])
+j = 0
+for data in kinneret_text:
+    data = data.rstrip()
+    split_data = data.split(",")
+    kinneret_list[j].extend(split_data)
+    j += 1
+
+dead_sea_data = open("salt_data.csv")
+dead_sea_text = dead_sea_data.readlines()[1:]
+dead_sea_list = []
+for i in range(len(dead_sea_text)):
+    dead_sea_list.append([])
+k = 0
+for data in dead_sea_text:
+    data = data.rstrip()
+    split_data = data.split(",")
+    dead_sea_list[k].extend(split_data)
+    k += 1
+
+# Presenting snippets of the data:
+
+print(kinneret_pandas.head())
+for item in dead_sea_list:
+    item[1] = float(item[1])
+dead_sea_np = numpy.array(dead_sea_list, dtype=object)
+print("Dead Sea level:")
+print(dead_sea_np[:5])
+
+# Extracting important information from the data:
+
+kinneret_dates = []
+for item in list(kinneret_pandas["Survey_Date"]):
+    kinneret_time = datetime(int(item[6:]), int(item[3:5]), int(item[:2]))
+    kinneret_dates.append(kinneret_time)
+print("Kinneret mean:", kinneret_pandas["Kinneret_Level"].mean())
+print("Kinneret standard deviation:", kinneret_pandas["Kinneret_Level"].std())
+
+dead_sea_level = dead_sea_np.T[1]
+dead_sea_dates = []
+for item in dead_sea_np.T[0]:
+    dead_sea_time = datetime(int(item[6:]), int(item[3:5]), int(item[:2]))
+    dead_sea_dates.append(dead_sea_time)
+print("Dead Sea mean:", numpy.mean(dead_sea_level))
+print("Dead Sea standard deviation:", numpy.std(dead_sea_level))
+
+# Plotting the data for both seas:
+
+each_sea = True  # Toggle these variables to False to disable showing the plots
+both_seas = True
+
+if each_sea:
+    plt.plot(kinneret_dates[::-1], list(kinneret_pandas["Kinneret_Level"])[::-1], "b-")
+    plt.title("Kinneret Level")
+    plt.xlabel("Year")
+    plt.ylabel("Level (m)")
+    plt.show()
+    plt.plot(dead_sea_dates, dead_sea_level, "r-")
+    plt.title("Dead Sea")
+    plt.xlabel("Year")
+    plt.ylabel("Level (m)")
+    plt.show()
+
+if both_seas:
+    plt.plot(kinneret_dates[::-1], list(kinneret_pandas["Kinneret_Level"])[::-1], "b-")
+    plt.plot(dead_sea_dates, dead_sea_level, "r-")
+    plt.legend(["Kinneret", "Dead Sea"])
+    plt.title("Levels of the Kinneret and the Dead Sea")
+    plt.xlabel("Year")
+    plt.ylabel("Level (m)")
+    plt.show()
+
+kinneret_data.close()
+dead_sea_data.close()
